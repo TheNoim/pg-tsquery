@@ -9,7 +9,7 @@ const PRECEDENCES = {
 };
 
 class Node {
-  constructor({ type, input, negated, left, right, value, prefix }) {
+  constructor({ type, input, negated, left, right, value, prefix, alwaysPrefix }) {
     this.type = type; // '&'|'|'|'<->'|'<1>'|'<2>'.. or undefined if a word node (leaf node)
     this.input = input; // remaining string to parse
     this.negated = negated; // boolean
@@ -17,13 +17,20 @@ class Node {
     this.right = right; // Node
     this.value = value; // word node string value
     this.prefix = prefix; // word node prefix when using a :* operator
+    this.alwaysPrefix = alwaysPrefix;
   }
 
   toString() {
     const s = this.negated ? '!' : '';
 
+    let prefixStr = '';
+
+    if (this.alwaysPrefix || this.prefix) {
+      prefixStr = ":*";
+    }
+
     if (!this.type) {
-      return this.value && s + this.value + (this.prefix ? ':*' : ''); // avoid just '!'
+      return this.value && s + this.value + prefixStr; // avoid just '!'
     }
 
     let left = this.left;
@@ -49,8 +56,8 @@ class Tsquery {
    * @param {TsqueryOptions} opts 
    */
   constructor({
-    or = /^\s*(?:[|,]|or)/i,
-    and = /^(?!\s*(?:[|,]|or))(?:[\s&+:|,!-]|and)*/i, // /^\s*(?:[\s&+:|,!-]|and)*/i,
+    or = /^\s*(?:[|,]|(oder|or))/i,
+    and = /^(?!\s*(?:[|,]|(oder|or)))(?:[\s&+:|,!-]|(und|and))*/i, // /^\s*(?:[\s&+:|,!-]|and)*/i,
     followedBy = /^\s*>/, // /^\s*<(?:(?:(\d+)|-)?>)?/,
     word = /^[\s*&+<:,|]*(?<negated>[\s!-]*)[\s*&+<:,|]*(?:(?<quote>["'])(?<phrase>.*?)\k<quote>|(?<word>[^\s,|&+<>:*()[\]!-]+))/,
     quotedWordSep = /(?:[\s<()|&!]|:\*)+/, // those are mostly tsquery operator, not removing them would cause errors
@@ -59,6 +66,7 @@ class Tsquery {
     negated = /[!-]$/,
     prefix = /^(\*|:\*)*/,
     tailOp = '&',
+    alwaysPrefix = false,
   } = {}) {
     this.or = or;
     this.and = and;
@@ -70,6 +78,7 @@ class Tsquery {
     this.negated = negated;
     this.prefix = prefix;
     this.tailOp = tailOp;
+    this.alwaysPrefix = alwaysPrefix;
   }
 
   parseAndStringify(str) {
@@ -96,6 +105,7 @@ class Tsquery {
           right,
           value: undefined,
           prefix: undefined,
+          alwaysPrefix: this.alwaysPrefix
         });
         tail = node.input;
       }
@@ -125,6 +135,7 @@ class Tsquery {
         right,
         value: undefined,
         prefix: undefined,
+        alwaysPrefix: this.alwaysPrefix
       });
     }
     return node;
@@ -152,6 +163,7 @@ class Tsquery {
         right,
         value: undefined,
         prefix: undefined,
+        alwaysPrefix: this.alwaysPrefix
       });
     }
     return node;
@@ -179,6 +191,7 @@ class Tsquery {
         right,
         value: undefined,
         prefix: undefined,
+        alwaysPrefix: this.alwaysPrefix
       });
     }
     return node;
@@ -218,6 +231,7 @@ class Tsquery {
       right: undefined,
       input,
       prefix,
+      alwaysPrefix: this.alwaysPrefix
     });
   }
 }
