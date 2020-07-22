@@ -1,5 +1,5 @@
 {
-  "name": "pg-tsquery",
+  "name": "@noim/pg-tsquery",
   "version": "8.2.0",
   "description": "Parse user input into valid text search queries",
   "engines": {
